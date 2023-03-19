@@ -1,4 +1,4 @@
-lib/codebuild/pipelineDeploy.yaml version: 0.2
+version: 0.2
 
 phases:
   install:
@@ -7,9 +7,12 @@ phases:
     commands:
       - npm install -g aws-cdk
       - npm install
-  build:
+  synth:
     commands:
       - cdk synth
+  deploy:
+    coomands:
+      - cdk deploy
 
 artifacts:
   base-directory: cdk.out

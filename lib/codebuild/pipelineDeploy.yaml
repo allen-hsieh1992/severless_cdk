@@ -1,10 +1,11 @@
-version: 0.2
+lib/codebuild/pipelineDeploy.yaml version: 0.2
 
 phases:
   install:
     runtime-versions:
       nodejs: 16
     commands:
+      - npm install -g aws-cdk
       - npm install
   build:
     commands:

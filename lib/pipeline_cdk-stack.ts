@@ -7,76 +7,78 @@ import { Bucket, BucketEncryption} from 'aws-cdk-lib/aws-s3';
 
 
 export class PipelineCdkStack extends cdk.Stack {
+
+    private _githubArtifacts: Artifact;
+    private _pipelineArtifactBucket: Bucket;
+    private readonly PIPELINE_BUCKET_NAME = "ci_cd_pipeline_artifacts_bukcet";
+    private readonly GITHUB_ARTIFACTS_NAME = "serverless_github_artficats";
+
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
-    
+        this._pipelineArtifactBucket = this.getPipelineArtifactBucket();
+        this._githubArtifacts = this.getGithubArtifacts();
+
+        let sourceAction = this.getSourceAction();
+        let BuildPipelineAction = this.getDeployPipelineAction();
 
 
-        const pipelineArtifactBucket = new Bucket(this, 'CiCdPipelineArtifacts', {
-            bucketName: `allen08-ci-cd-pipeline-artifacts-bukcet`,
-            encryption: BucketEncryption.S3_MANAGED
-        });
-
-        /* oauthToken: cdk.SecretValue.secretsManager('github_token'),
-
-        */
-
-        const oauth =  cdk.SecretValue.secretsManager('github_token');
-
-        const sourceArtifacts = new Artifact('serverless_cdk_artifact_test');
-        const githubAction: GitHubSourceAction = new GitHubSourceAction({
-            actionName: 'GitHub_Source',
-            owner: 'allen-hsieh1992',
-            repo: 'severless_cdk',
-            oauthToken: oauth,
-            output: sourceArtifacts,
-            branch: 'master',
-            trigger: GitHubTrigger.WEBHOOK
-          });
-
-          
-
-        const buildProject = new PipelineProject(this, "buildAction", {
-            buildSpec: BuildSpec.fromObject({
-                version: '0.2',
-                phases: {
-                  build: {
-                    commands:[
-                      'ls',
-                    ],
-                  },
-                },
-              }),
-            environment: {
-                buildImage: LinuxBuildImage.STANDARD_3_0            
-            },
-            projectName: 'aws-serverless-app-build'
-        })
-
-        const buildArtifacts = new Artifact();
-        const buildAction: CodeBuildAction = new CodeBuildAction({
-          actionName: 'Build',
-          input: sourceArtifacts,
-          project: buildProject,
-          variablesNamespace: 'BuildVariables',
-          outputs: [buildArtifacts]
-        });
-
-        new Pipeline(this, 'CiCdPipeline', {
-            pipelineName: 'aws-serverless-app',
-            artifactBucket: pipelineArtifactBucket,
+        new Pipeline(this, 'ServerlessAppPipeline', {
+            pipelineName: 'serverless-app',
+            artifactBucket: this._pipelineArtifactBucket,
             stages: [
               {
                 stageName: 'Source',
-                actions: [githubAction],
+                actions: [sourceAction],
               },
-              { stageName: 'buildAction', 
-                actions: [buildAction]
+              { stageName: 'BuildPipeline', 
+                actions: [BuildPipelineAction]
               },
             ]
         })
     }
 
+    private getGithubArtifacts(): Artifact {
+        return new Artifact(this.GITHUB_ARTIFACTS_NAME);
+    }
 
+    private getPipelineArtifactBucket(): Bucket {
+        return new Bucket(this, 
+            'CiCdPipelineArtifacts', {
+                bucketName: this.PIPELINE_BUCKET_NAME,
+                encryption: BucketEncryption.S3_MANAGED
+        });
+    }
+
+    private getSourceAction() : GitHubSourceAction {
+        const oauth =  cdk.SecretValue.secretsManager('github_token');
+        return new GitHubSourceAction({
+            actionName: 'GitHub_Source',
+            owner: 'allen-hsieh1992',
+            repo: 'severless_cdk',
+            oauthToken: oauth,
+            output: this._githubArtifacts,
+            branch: 'main',
+            trigger: GitHubTrigger.WEBHOOK
+        });
+    }
+
+    private getDeployPipelineAction(): CodeBuildAction {
+        const buildArtifacts = new Artifact();
+        const buildProject: PipelineProject = this.getDeployPipelineBuildProject();
+        return new CodeBuildAction({
+          actionName: 'Build',
+          input: this._githubArtifacts,
+          project: buildProject,
+          variablesNamespace: 'BuildVariables',
+          outputs: [buildArtifacts]
+        });
+    } 
+
+    private getDeployPipelineBuildProject(): PipelineProject {
+        return new PipelineProject(this, "buildAction", {
+            buildSpec: BuildSpec.fromSourceFilename("./lib/codebuild/build.yaml"),
+            projectName: 'aws-serverless-app-build'
+        })
+    }
 }

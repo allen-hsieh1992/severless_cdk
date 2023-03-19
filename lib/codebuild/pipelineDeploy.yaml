@@ -10,9 +10,10 @@ phases:
   pre_build:
     commands:
       - npx cdk synth
+      - ls ${CODEBUILD_SRC_DIR}/cdk.out
   build:
     commands:
-      - npx cdk deploy
+      - npx cdk deploy PipelineCdkStack
 
 artifacts:
   base-directory: cdk.out

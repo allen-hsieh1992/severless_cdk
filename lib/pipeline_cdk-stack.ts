@@ -81,7 +81,10 @@ export class PipelineCdkStack extends cdk.Stack {
             buildSpec: BuildSpec.fromSourceFilename(
                 this.BASE_CODEBUILD_SPEC_PATH + 
                 this.PIPELINE_DEPLOY_CODEBUILD_SPEC_FILENAME),
-            projectName: 'aws-serverless-pipeline-deploy'
+            projectName: 'aws-serverless-pipeline-deploy',
+            environment: {
+                buildImage: LinuxBuildImage.STANDARD_6_0
+            },
         })
     }
 }

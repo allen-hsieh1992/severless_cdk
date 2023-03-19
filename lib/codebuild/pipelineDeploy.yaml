@@ -7,10 +7,10 @@ phases:
     commands:
       - npm install -g aws-cdk
       - npm install
-  synth:
+  pre_build:
     commands:
       - cdk synth
-  deploy:
+  build:
     coomands:
       - cdk deploy
 

@@ -10,9 +10,10 @@ export class PipelineCdkStack extends cdk.Stack {
 
     private _githubArtifacts: Artifact;
     private _pipelineArtifactBucket: Bucket;
-    private readonly PIPELINE_BUCKET_NAME = "ci_cd_pipeline_artifacts_bukcet";
+    private readonly PIPELINE_BUCKET_NAME = "ci-cd-pipeline-artifacts-bukcet";
     private readonly GITHUB_ARTIFACTS_NAME = "serverless_github_artficats";
-
+    private readonly BASE_CODEBUILD_SPEC_PATH = "./lib/codebuild/"
+    private readonly PIPELINE_DEPLOY_CODEBUILD_SPEC_FILENAME = "pipelineDeploy.yaml";
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
@@ -77,8 +78,10 @@ export class PipelineCdkStack extends cdk.Stack {
 
     private getDeployPipelineBuildProject(): PipelineProject {
         return new PipelineProject(this, "buildAction", {
-            buildSpec: BuildSpec.fromSourceFilename("./lib/codebuild/build.yaml"),
-            projectName: 'aws-serverless-app-build'
+            buildSpec: BuildSpec.fromSourceFilename(
+                this.BASE_CODEBUILD_SPEC_PATH + 
+                this.PIPELINE_DEPLOY_CODEBUILD_SPEC_FILENAME),
+            projectName: 'aws-serverless-pipeline-deploy'
         })
     }
 }

@@ -5,7 +5,7 @@ phases:
     runtime-versions:
       nodejs: 16
     commands:
-      - npm install -g aws-cdk
+      - npm install -g npm
       - npm install
   pre_build:
     commands:

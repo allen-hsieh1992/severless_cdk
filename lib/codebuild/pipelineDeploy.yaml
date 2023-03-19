@@ -9,10 +9,10 @@ phases:
       - npm install
   pre_build:
     commands:
-      - cdk synth
+      - npx cdk synth
   build:
-    coomands:
-      - cdk deploy
+    commands:
+      - npx cdk deploy
 
 artifacts:
   base-directory: cdk.out

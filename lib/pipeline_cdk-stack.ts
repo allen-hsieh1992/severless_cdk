@@ -85,7 +85,7 @@ export class PipelineCdkStack extends cdk.Stack {
     } 
 
     private getDeployRole(): Role {
-        if (this._deployRole === null) {
+        if (this._deployRole === undefined) {
             this._deployRole = new Role(this, 'DeployRole', {
                 assumedBy: new ServicePrincipal('codebuild.amazonaws.com'),
                 inlinePolicies: {

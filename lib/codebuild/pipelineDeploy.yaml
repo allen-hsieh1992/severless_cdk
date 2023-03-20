@@ -13,6 +13,7 @@ phases:
       - ls ${CODEBUILD_SRC_DIR}/cdk.out
   build:
     commands:
+      - echo ${STACK}
       - npx cdk deploy ${STACK} --require-approval never
 
 artifacts:

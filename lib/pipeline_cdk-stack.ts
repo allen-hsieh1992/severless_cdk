@@ -4,16 +4,21 @@ import { Artifact, Pipeline }  from "aws-cdk-lib/aws-codepipeline";
 import { GitHubSourceAction, GitHubTrigger, CodeBuildAction} from 'aws-cdk-lib/aws-codepipeline-actions';
 import { PipelineProject, LinuxBuildImage, BuildSpec } from "aws-cdk-lib/aws-codebuild";
 import { Bucket, BucketEncryption} from 'aws-cdk-lib/aws-s3';
+import { PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 
 
 export class PipelineCdkStack extends cdk.Stack {
 
     private _githubArtifacts: Artifact;
     private _pipelineArtifactBucket: Bucket;
+    private _deployRole: Role;
     private readonly PIPELINE_BUCKET_NAME = "ci-cd-pipeline-artifacts-bukcet";
     private readonly GITHUB_ARTIFACTS_NAME = "serverless_github_artficats";
     private readonly BASE_CODEBUILD_SPEC_PATH = "./lib/codebuild/"
     private readonly PIPELINE_DEPLOY_CODEBUILD_SPEC_FILENAME = "pipelineDeploy.yaml";
+    private readonly PIPELINE_STACK_NAME = "PipelineCdkStack";
+    private readonly SERVERLESS_STACK_NAME = "SeverlessCdkStack";
+
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
@@ -21,8 +26,8 @@ export class PipelineCdkStack extends cdk.Stack {
         this._githubArtifacts = this.getGithubArtifacts();
 
         let sourceAction = this.getSourceAction();
-        let BuildPipelineAction = this.getDeployPipelineAction();
-
+        let DeployPipelineStackAction = this.getDeployAction(this.PIPELINE_STACK_NAME);
+        let DeployServerlessStackAction = this.getDeployAction(this.SERVERLESS_STACK_NAME);
 
         new Pipeline(this, 'ServerlessAppPipeline', {
             pipelineName: 'serverless-app',
@@ -32,8 +37,8 @@ export class PipelineCdkStack extends cdk.Stack {
                 stageName: 'Source',
                 actions: [sourceAction],
               },
-              { stageName: 'BuildPipeline', 
-                actions: [BuildPipelineAction]
+              { stageName: 'DeployStack', 
+                actions: [DeployPipelineStackAction, DeployServerlessStackAction]
               },
             ]
         })
@@ -64,27 +69,50 @@ export class PipelineCdkStack extends cdk.Stack {
         });
     }
 
-    private getDeployPipelineAction(): CodeBuildAction {
-        const buildArtifacts = new Artifact();
-        const buildProject: PipelineProject = this.getDeployPipelineBuildProject();
+    private getDeployAction(deployStack: string): CodeBuildAction {
+        const buildArtifacts = new Artifact("Artifact_" + deployStack);
+        const buildProject: PipelineProject = this.getDeployBuildProject(deployStack);
         return new CodeBuildAction({
-          actionName: 'Build',
+          actionName: 'Deploy_' + deployStack,
           input: this._githubArtifacts,
           project: buildProject,
-          variablesNamespace: 'BuildVariables',
-          outputs: [buildArtifacts]
+          variablesNamespace: deployStack + '_variables_namespace',
+          outputs: [buildArtifacts],
+          environmentVariables: {
+            STACK : { value: deployStack },
+          }
         });
     } 
 
-    private getDeployPipelineBuildProject(): PipelineProject {
-        return new PipelineProject(this, "buildAction", {
+    private getDeployRole(): Role {
+        if (this._deployRole === null) {
+            this._deployRole = new Role(this, 'DeployRole', {
+                assumedBy: new ServicePrincipal('codebuild.amazonaws.com'),
+                inlinePolicies: {
+                  "CDKDeploy": new PolicyDocument({
+                    statements: [
+                      new PolicyStatement({
+                        actions: ["sts:AssumeRole"],
+                        resources: ["arn:aws:iam::*:role/cdk-*"]
+                      }),
+                    ]
+                })}
+            });
+        }
+        return this._deployRole;
+    }
+
+    private getDeployBuildProject(deployStack: string): PipelineProject {
+        const deployRole: Role = this.getDeployRole();
+        return new PipelineProject(this, "deployAction_" + deployStack, {
             buildSpec: BuildSpec.fromSourceFilename(
                 this.BASE_CODEBUILD_SPEC_PATH + 
                 this.PIPELINE_DEPLOY_CODEBUILD_SPEC_FILENAME),
-            projectName: 'aws-serverless-pipeline-deploy',
+            projectName: deployStack,
             environment: {
                 buildImage: LinuxBuildImage.STANDARD_6_0
             },
+            role: deployRole
         })
     }
 }

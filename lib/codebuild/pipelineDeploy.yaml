@@ -13,7 +13,7 @@ phases:
       - ls ${CODEBUILD_SRC_DIR}/cdk.out
   build:
     commands:
-      - npx cdk deploy PipelineCdkStack --require-approval never
+      - npx cdk deploy ${STACK} --require-approval never
 
 artifacts:
   base-directory: cdk.out

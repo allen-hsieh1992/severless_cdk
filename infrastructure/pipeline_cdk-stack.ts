@@ -37,10 +37,13 @@ export class PipelineCdkStack extends cdk.Stack {
                 stageName: 'Source',
                 actions: [sourceAction],
               },
-              { stageName: 'DeployStack', 
+              { stageName: 'DeployCognitoStackAction', 
                 actions: [//DeployPipelineStackAction, 
-                          DeployServerlessStackAction,
                           DeployCognitoStackAction]
+              },
+              {
+                stageName: 'DeployServerlessStackAction',
+                actions: [DeployServerlessStackAction],
               },
             ]
         })

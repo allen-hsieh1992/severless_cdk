@@ -15,7 +15,7 @@ export class PipelineCdkStack extends cdk.Stack {
     private readonly PIPELINE_BUCKET_NAME = "ci-cd-pipeline-artifacts-bukcet";
     private readonly GITHUB_ARTIFACTS_NAME = "serverless_github_artficats";
     private readonly BASE_CODEBUILD_SPEC_PATH = "./infrastructure/codebuild/"
-    private readonly PIPELINE_STACK_NAME = "PipelineCdkStack";
+    //private readonly PIPELINE_STACK_NAME = "PipelineCdkStack";
     private readonly SERVERLESS_STACK_NAME = "SeverlessCdkStack";
     private readonly COGNITO_STACK_NAME = "CognitoCdkStack";
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -25,7 +25,7 @@ export class PipelineCdkStack extends cdk.Stack {
         this._githubArtifacts = this.getGithubArtifacts();
 
         let sourceAction = this.getSourceAction();
-        let DeployPipelineStackAction = this.getDeployAction(this.PIPELINE_STACK_NAME);
+        //let DeployPipelineStackAction = this.getDeployAction(this.PIPELINE_STACK_NAME);
         let DeployServerlessStackAction = this.getDeployAction(this.SERVERLESS_STACK_NAME);
         let DeployCognitoStackAction = this.getDeployAction(this.COGNITO_STACK_NAME);
 
@@ -38,7 +38,7 @@ export class PipelineCdkStack extends cdk.Stack {
                 actions: [sourceAction],
               },
               { stageName: 'DeployStack', 
-                actions: [DeployPipelineStackAction, 
+                actions: [//DeployPipelineStackAction, 
                           DeployServerlessStackAction,
                           DeployCognitoStackAction]
               },

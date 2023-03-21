@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { SeverlessCdkStack } from '../lib/severless_cdk-stack';
-import { PipelineCdkStack }  from '../lib/pipeline_cdk-stack';
-
+import { SeverlessCdkStack } from '../infrastructure/severless_cdk-stack';
+import { PipelineCdkStack }  from '../infrastructure/pipeline_cdk-stack';
+import { CognitoCdkStack } from '../infrastructure/cognito_cdk-stack';
 const app = new cdk.App();
+new PipelineCdkStack(app, "PipelineCdkStack", {
+  env: { account: '129824596365', region: 'ap-northeast-1' },
+});
+
+new CognitoCdkStack(app, "CognitoCdkStack", {
+  env: { account: '129824596365', region: 'ap-northeast-1' },
+});
+
 new SeverlessCdkStack(app, 'SeverlessCdkStack', {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
@@ -19,7 +27,4 @@ new SeverlessCdkStack(app, 'SeverlessCdkStack', {
   env: { account: '129824596365', region: 'ap-northeast-1' },
 
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
-new PipelineCdkStack(app, "PipelineCdkStack", {
-  env: { account: '129824596365', region: 'ap-northeast-1' },
 });

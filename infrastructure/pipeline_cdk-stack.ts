@@ -14,11 +14,10 @@ export class PipelineCdkStack extends cdk.Stack {
     private _deployRole: Role;
     private readonly PIPELINE_BUCKET_NAME = "ci-cd-pipeline-artifacts-bukcet";
     private readonly GITHUB_ARTIFACTS_NAME = "serverless_github_artficats";
-    private readonly BASE_CODEBUILD_SPEC_PATH = "./lib/codebuild/"
-    private readonly PIPELINE_DEPLOY_CODEBUILD_SPEC_FILENAME = "pipelineDeploy.yaml";
+    private readonly BASE_CODEBUILD_SPEC_PATH = "./infrastructure/codebuild/"
     private readonly PIPELINE_STACK_NAME = "PipelineCdkStack";
     private readonly SERVERLESS_STACK_NAME = "SeverlessCdkStack";
-
+    private readonly COGNITO_STACK_NAME = "CognitoCdkStack";
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
@@ -28,6 +27,7 @@ export class PipelineCdkStack extends cdk.Stack {
         let sourceAction = this.getSourceAction();
         let DeployPipelineStackAction = this.getDeployAction(this.PIPELINE_STACK_NAME);
         let DeployServerlessStackAction = this.getDeployAction(this.SERVERLESS_STACK_NAME);
+        let DeployCognitoStackAction = this.getDeployAction(this.COGNITO_STACK_NAME);
 
         new Pipeline(this, 'ServerlessAppPipeline', {
             pipelineName: 'serverless-app',
@@ -38,7 +38,9 @@ export class PipelineCdkStack extends cdk.Stack {
                 actions: [sourceAction],
               },
               { stageName: 'DeployStack', 
-                actions: [DeployPipelineStackAction, DeployServerlessStackAction]
+                actions: [DeployPipelineStackAction, 
+                          DeployServerlessStackAction,
+                          DeployCognitoStackAction]
               },
             ]
         })
@@ -107,7 +109,7 @@ export class PipelineCdkStack extends cdk.Stack {
         return new PipelineProject(this, "deployAction_" + deployStack, {
             buildSpec: BuildSpec.fromSourceFilename(
                 this.BASE_CODEBUILD_SPEC_PATH + 
-                this.PIPELINE_DEPLOY_CODEBUILD_SPEC_FILENAME),
+                deployStack + ".yaml"),
             projectName: deployStack,
             environment: {
                 buildImage: LinuxBuildImage.STANDARD_6_0

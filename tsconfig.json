@@ -21,7 +21,9 @@
     "strictPropertyInitialization": false,
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    "rootDirs": ["/lambda"],
+    "outDir": "js"
   },
   "exclude": [
     "node_modules",

@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 16
+    commands:
+      - npm install -g npm
+      - npm install
+      - npm run build
+  pre_build:
+    commands:
+      - npx cdk synth
+      - ls ${CODEBUILD_SRC_DIR}/cdk.out
+  build:
+    commands:
+      - echo ${STACK}
+      - npx cdk deploy ${STACK} --require-approval never
+
+artifacts:
+  base-directory: cdk.out
+  files:
+    - '**/*'
+
+cache:
+  paths:
+    - 'node_modules/**/*'
